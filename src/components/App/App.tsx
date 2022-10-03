@@ -1,6 +1,9 @@
 import { useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import { fetchResources } from '../../store/resources';
+import {
+	fetchResources,
+	requestResourcesAtTimestamp,
+} from '../../store/resources';
 import { ResourcesLoadingStatus, RootState } from '../../store/types';
 import TimeSelector from '../TimeSelector';
 import styles from './App.module.css';
@@ -20,6 +23,10 @@ export function App() {
 			dispatch(fetchResources());
 		}
 	}, [resourcesStatus, dispatch]);
+
+	// useEffect(() => {
+	// 	dispatch(requestResourcesAtTimestamp());
+	// });
 
 	return (
 		<div className={styles.app}>

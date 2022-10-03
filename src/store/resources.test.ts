@@ -1,6 +1,10 @@
 import axios from 'axios';
 import { store } from './store';
-import { setSelectedTime, fetchResources } from './resources';
+import {
+	setSelectedTime,
+	fetchResources,
+	requestResourcesAtTimestamp,
+} from './resources';
 
 describe('resourcesSlice', () => {
 	it('should fetch and parse changes', async () => {
@@ -18,12 +22,10 @@ describe('resourcesSlice', () => {
 			name: 'Bob',
 			resource: 'wood',
 			value: 5,
-
-			totalAmount: 5,
 		});
 	});
 
-	it('should count total amount', async () => {
+	it('should calculate resource at a time point', async () => {
 		jest.spyOn(axios, 'get').mockResolvedValueOnce({
 			data: `{'timestamp': 15, 'name': 'Bob', 'resource': 'wood', 'value': 5}
 			       {'timestamp': 16, 'name': 'Alex', 'resource': 'silver', 'value': 999}
@@ -33,13 +35,20 @@ describe('resourcesSlice', () => {
 		});
 
 		await store.dispatch(fetchResources());
-		const state = store.getState().resources;
+		await store.dispatch(requestResourcesAtTimestamp({ timestamp: 19 }));
+		let state = store.getState().resources;
 
-		expect(state.resourceChanges[0].totalAmount).toBe(5);
-		expect(state.resourceChanges[1].totalAmount).toBe(999);
-		expect(state.resourceChanges[2].totalAmount).toBe(1000);
-		expect(state.resourceChanges[3].totalAmount).toBe(3);
-		expect(state.resourceChanges[4].totalAmount).toBe(50);
+		expect(state.selectedResources.timestamp).toBe(19);
+		expect(state.selectedResources.resources.wood.Alex).toBe(50);
+		expect(state.selectedResources.resources.wood.Bob).toBe(3);
+		expect(state.selectedResources.resources.silver.Alex).toBe(1000);
+
+		await store.dispatch(requestResourcesAtTimestamp({ timestamp: 16 }));
+		state = store.getState().resources;
+		expect(state.selectedResources.resources.wood.Bob).toBe(5);
+		expect(state.selectedResources.resources.silver.Alex).toBe(999);
+		expect(state.selectedResources.resources.wood.Alex).toBeUndefined();
+		expect(state.selectedTime).toBe(16);
 	});
 
 	it('should select time and respect limits', async () => {
