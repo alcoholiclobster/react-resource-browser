@@ -48,7 +48,7 @@ describe('resourcesSlice', () => {
 		expect(state.selectedResources.resources.wood.Bob).toBe(5);
 		expect(state.selectedResources.resources.silver.Alex).toBe(999);
 		expect(state.selectedResources.resources.wood.Alex).toBeUndefined();
-		expect(state.selectedTime).toBe(16);
+		expect(state.selectedResources.timestamp).toBe(16);
 	});
 
 	it('should select time and respect limits', async () => {

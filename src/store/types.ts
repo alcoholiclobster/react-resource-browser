@@ -3,7 +3,7 @@ export interface RootState {
 }
 
 export interface ResourceTimePoint {
-	index: number,
+	index: number;
 	timestamp: number;
 	resources: {
 		[resource: string]: {
@@ -28,6 +28,7 @@ export enum ResourcesLoadingStatus {
 
 export interface ResourcesState {
 	status: ResourcesLoadingStatus;
+	isLoadingSelected: boolean;
 
 	selectedTime: number;
 	selectedResources: ResourceTimePoint;

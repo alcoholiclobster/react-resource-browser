@@ -12,6 +12,7 @@ import { eachLimit, everyLimit } from 'async';
 
 const initialState: ResourcesState = {
 	status: ResourcesLoadingStatus.Idle,
+	isLoadingSelected: false,
 
 	selectedTime: 0,
 	selectedResources: {
@@ -26,12 +27,6 @@ const initialState: ResourcesState = {
 	resourceChanges: [],
 };
 
-const calculateResourcesState = (
-	fromState: ResourceTimePoint,
-	fromIndex: number,
-	toTimestamp: number
-) => {};
-
 const resourcesSlice = createSlice({
 	name: 'resources',
 	initialState,
@@ -43,6 +38,18 @@ const resourcesSlice = createSlice({
 				state.timeFrom,
 				Math.min(state.timeTo, state.selectedTime)
 			);
+		},
+
+		setLoadingSelected(state) {
+			state.isLoadingSelected = true;
+		},
+
+		completeLoadingSelected(
+			state,
+			{ payload }: PayloadAction<ResourceTimePoint>
+		) {
+			state.isLoadingSelected = false;
+			state.selectedResources = payload;
 		},
 	},
 
@@ -63,12 +70,6 @@ const resourcesSlice = createSlice({
 							state.resourceChanges.length - 1
 						].timestamp;
 
-					const item = state.resourceChanges[0];
-					const totalResources = new Map<
-						string,
-						Map<string, number>
-					>();
-
 					state.selectedResources = {
 						index: -1,
 						timestamp: -1,
@@ -87,12 +88,19 @@ const resourcesSlice = createSlice({
 
 			.addCase(fetchResources.rejected, (state) => {
 				state.status = ResourcesLoadingStatus.Error;
-			})
-
-			.addCase(requestResourcesAtTimestamp.fulfilled, (state, action) => {
-				state.selectedResources = action.payload.selectedResources;
-				state.selectedTime = action.payload.selectedResources.timestamp;
 			});
+
+		// .addCase(requestResourcesAtTimestamp.fulfilled, (state, action) => {
+		// 	console.log('no payload');
+		// 	if (!action.payload) {
+		// 		return;
+		// 	}
+
+		// 	// state.selectedResources = action.payload.selectedResources;
+		// 	// state.selectedTime = action.payload.selectedResources.timestamp;
+
+		// 	console.log(state.selectedResources);
+		// });
 	},
 });
 
@@ -102,7 +110,6 @@ export const fetchResources = createAsyncThunk(
 		const response = await axios.get<string>(config.endpoints.getResources);
 
 		const changes: ResourceChangeItem[] = [];
-		// const resourceTotalAmounts = new Map<string, Map<string, number>>();
 
 		await eachLimit(
 			response.data.split('\n'),
@@ -124,10 +131,19 @@ export const fetchResources = createAsyncThunk(
 
 export const requestResourcesAtTimestamp = createAsyncThunk(
 	'resources/requestResourcesAtTimestamp',
-	async ({ timestamp }: { timestamp: number }, { getState }) => {
+	async ({ timestamp }: { timestamp: number }, { getState, dispatch }) => {
 		const state = getState() as RootState;
+		if (state.resources.isLoadingSelected) {
+			return null;
+		}
 
-		const resourceTotalAmounts = new Map<string, Map<string, number>>();
+		dispatch(resourcesSlice.actions.setLoadingSelected());
+
+		const result: ResourceTimePoint = {
+			timestamp,
+			index: 0,
+			resources: {},
+		};
 
 		let index = 0;
 		await everyLimit(
@@ -137,43 +153,25 @@ export const requestResourcesAtTimestamp = createAsyncThunk(
 				if (item.timestamp > timestamp) {
 					return callback(null, false);
 				}
-				
-				let totalResources = resourceTotalAmounts.get(item.resource);
-				if (!totalResources) {
-					totalResources = new Map();
-					resourceTotalAmounts.set(item.resource, totalResources);
+
+				if (!result.resources[item.resource]) {
+					result.resources[item.resource] = {};
 				}
 
-				totalResources.set(
-					item.name,
-					(totalResources.get(item.name) ?? 0) + item.value
-				);
+				result.resources[item.resource][item.name] =
+					(result.resources[item.resource][item.name] ?? 0) +
+					item.value;
+
+				result.index = index;
+				result.timestamp = item.timestamp;
 
 				index++;
 
-				setTimeout(callback, 0, null, true);
+				setTimeout(() => callback(null, true), 0);
 			}
 		);
 
-		const selectedResources: ResourceTimePoint = {
-			timestamp,
-			index,
-			resources: {},
-		};
-
-		for (const [resource, users] of resourceTotalAmounts.entries()) {
-			if (!selectedResources.resources[resource]) {
-				selectedResources.resources[resource] = {};
-			}
-
-			for (const [user, amount] of users.entries()) {
-				selectedResources.resources[resource][user] = amount;
-			}
-		}
-
-		return {
-			selectedResources,
-		};
+		dispatch(resourcesSlice.actions.completeLoadingSelected(result));
 	}
 );
 
