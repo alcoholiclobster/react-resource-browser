@@ -8,7 +8,7 @@ interface TimeRangeProps {
 }
 
 export function TimelineRange({ onChange, itemsCount }: TimeRangeProps) {
-	const [value, setValue] = useState(0);
+	const [value, setValue] = useState(-1);
 
 	const handleChange = useCallback(
 		(values: number[]) => {
@@ -21,9 +21,9 @@ export function TimelineRange({ onChange, itemsCount }: TimeRangeProps) {
 	return (
 		<Range
 			step={1}
-			min={0}
-			max={Math.max(1, itemsCount)}
-			disabled={itemsCount < 1}
+			min={-1}
+			max={itemsCount}
+			disabled={itemsCount === 0}
 			values={[value]}
 			onChange={handleChange}
 			renderTrack={({ props, children }) => (

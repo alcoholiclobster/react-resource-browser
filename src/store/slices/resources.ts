@@ -4,11 +4,11 @@ import {
 	ResourcesLoadingStatus,
 	ResourcesState,
 	RootState,
-} from './types';
+} from '../types';
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import axios from 'axios';
 import { cloneDeep } from 'lodash';
-import config from '../config';
+import config from '../../config';
 import { eachLimit } from 'async';
 
 const initialState: ResourcesState = {
@@ -52,7 +52,7 @@ const resourcesSlice = createSlice({
 				state.status = ResourcesLoadingStatus.Error;
 			})
 
-			.addCase(setTimelineIndex.fulfilled, (state, action) => {
+			.addCase(setTimelinePosition.fulfilled, (state, action) => {
 				state.isLoadingAggregatedState = false;
 				if (!action.payload) {
 					return;
@@ -87,8 +87,8 @@ export const fetchResources = createAsyncThunk(
 	}
 );
 
-export const setTimelineIndex = createAsyncThunk(
-	'resources/requestResourcesAtTimestamp',
+export const setTimelinePosition = createAsyncThunk(
+	'resources/setTimelinePosition',
 	async (
 		index: number,
 		{ getState, dispatch }
