@@ -2,31 +2,28 @@ import { useCallback, useState } from 'react';
 import { Range } from 'react-range';
 
 interface TimeRangeProps {
-	onChange: (timestamp: number) => void;
+	onChange: (itemIndex: number) => void;
 
-	min: number;
-	max: number;
-
-	disabled?: boolean;
+	itemsCount: number;
 }
 
-export function TimeRange({ onChange, min, max, disabled }: TimeRangeProps) {
+export function TimelineRange({ onChange, itemsCount }: TimeRangeProps) {
 	const [value, setValue] = useState(0);
 
 	const handleChange = useCallback(
 		(values: number[]) => {
 			setValue(values[0]);
-			onChange((values[0] / 100) * (max - min) + min);
+			onChange(values[0]);
 		},
-		[min, max]
+		[itemsCount]
 	);
 
 	return (
 		<Range
 			step={1}
 			min={0}
-			max={100}
-			disabled={disabled}
+			max={Math.max(1, itemsCount)}
+			disabled={itemsCount < 1}
 			values={[value]}
 			onChange={handleChange}
 			renderTrack={({ props, children }) => (

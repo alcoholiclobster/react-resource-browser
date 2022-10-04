@@ -2,7 +2,7 @@ export interface RootState {
 	resources: ResourcesState;
 }
 
-export interface ResourceTimePoint {
+export interface AggregatedState {
 	index: number;
 	timestamp: number;
 	resources: {
@@ -12,7 +12,7 @@ export interface ResourceTimePoint {
 	};
 }
 
-export interface ResourceChangeItem {
+export interface ResourceChange {
 	timestamp: number;
 	name: string;
 	resource: string;
@@ -28,13 +28,8 @@ export enum ResourcesLoadingStatus {
 
 export interface ResourcesState {
 	status: ResourcesLoadingStatus;
-	isLoadingSelected: boolean;
+	isLoadingAggregatedState: boolean;
 
-	selectedTime: number;
-	selectedResources: ResourceTimePoint;
-
-	timeFrom: number;
-	timeTo: number;
-
-	resourceChanges: ResourceChangeItem[];
+	aggregatedState: AggregatedState;
+	changes: ResourceChange[];
 }

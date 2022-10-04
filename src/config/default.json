@@ -1,0 +1,8 @@
+{
+	"maxChangesParsedPerTick": 1000,
+	"maxChangesProcessedPerTick": 5000,
+
+	"endpoints": {
+		"getResources": "https://raw.githubusercontent.com/alexgavrushenko/lootbox/master/generated.log"
+	}
+}

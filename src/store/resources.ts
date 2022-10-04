@@ -1,55 +1,37 @@
-import { PayloadAction, createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import {
-	ResourceChangeItem,
+	AggregatedState,
+	ResourceChange,
 	ResourcesLoadingStatus,
 	ResourcesState,
-	ResourceTimePoint,
 	RootState,
 } from './types';
+import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import axios from 'axios';
+import { cloneDeep } from 'lodash';
 import config from '../config';
-import { eachLimit, everyLimit } from 'async';
+import { eachLimit } from 'async';
 
 const initialState: ResourcesState = {
 	status: ResourcesLoadingStatus.Idle,
-	isLoadingSelected: false,
-
-	selectedTime: 0,
-	selectedResources: {
+	isLoadingAggregatedState: false,
+	aggregatedState: {
 		index: -1,
-		timestamp: 0,
+		timestamp: -1,
 		resources: {},
 	},
-
-	timeFrom: 0,
-	timeTo: 0,
-
-	resourceChanges: [],
+	changes: [],
 };
+
+async function wait(ms: number = 0) {
+	return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 const resourcesSlice = createSlice({
 	name: 'resources',
 	initialState,
 	reducers: {
-		setSelectedTime(state, { payload }: PayloadAction<{ time: number }>) {
-			state.selectedTime = payload.time;
-
-			state.selectedTime = Math.max(
-				state.timeFrom,
-				Math.min(state.timeTo, state.selectedTime)
-			);
-		},
-
-		setLoadingSelected(state) {
-			state.isLoadingSelected = true;
-		},
-
-		completeLoadingSelected(
-			state,
-			{ payload }: PayloadAction<ResourceTimePoint>
-		) {
-			state.isLoadingSelected = false;
-			state.selectedResources = payload;
+		setLoadingAggregatedState(state) {
+			state.isLoadingAggregatedState = true;
 		},
 	},
 
@@ -61,46 +43,22 @@ const resourcesSlice = createSlice({
 
 			.addCase(fetchResources.fulfilled, (state, action) => {
 				state.status = ResourcesLoadingStatus.Loaded;
-				state.resourceChanges = action.payload.changes;
 
-				if (state.resourceChanges.length > 0) {
-					state.timeFrom = state.resourceChanges[0].timestamp;
-					state.timeTo =
-						state.resourceChanges[
-							state.resourceChanges.length - 1
-						].timestamp;
-
-					state.selectedResources = {
-						index: -1,
-						timestamp: -1,
-						resources: {},
-					};
-				} else {
-					state.timeFrom = 0;
-					state.timeTo = 0;
-				}
-
-				state.selectedTime = Math.max(
-					state.timeFrom,
-					Math.min(state.timeTo, state.selectedTime)
-				);
+				state.changes = action.payload.changes;
+				state.aggregatedState = { ...initialState.aggregatedState };
 			})
 
 			.addCase(fetchResources.rejected, (state) => {
 				state.status = ResourcesLoadingStatus.Error;
+			})
+
+			.addCase(setTimelineIndex.fulfilled, (state, action) => {
+				state.isLoadingAggregatedState = false;
+				if (!action.payload) {
+					return;
+				}
+				state.aggregatedState = action.payload;
 			});
-
-		// .addCase(requestResourcesAtTimestamp.fulfilled, (state, action) => {
-		// 	console.log('no payload');
-		// 	if (!action.payload) {
-		// 		return;
-		// 	}
-
-		// 	// state.selectedResources = action.payload.selectedResources;
-		// 	// state.selectedTime = action.payload.selectedResources.timestamp;
-
-		// 	console.log(state.selectedResources);
-		// });
 	},
 });
 
@@ -108,12 +66,12 @@ export const fetchResources = createAsyncThunk(
 	'resources/fetchResources',
 	async () => {
 		const response = await axios.get<string>(config.endpoints.getResources);
+		const changes: ResourceChange[] = [];
 
-		const changes: ResourceChangeItem[] = [];
-
+		// Limit items processed by tick to prevent app from freezing
 		await eachLimit(
 			response.data.split('\n'),
-			config.maxChangesProcessedByTick,
+			config.maxChangesParsedPerTick,
 			(line: string, callback) => {
 				try {
 					const item = JSON.parse(line.replace(/'/g, '"'));
@@ -129,52 +87,78 @@ export const fetchResources = createAsyncThunk(
 	}
 );
 
-export const requestResourcesAtTimestamp = createAsyncThunk(
+export const setTimelineIndex = createAsyncThunk(
 	'resources/requestResourcesAtTimestamp',
-	async ({ timestamp }: { timestamp: number }, { getState, dispatch }) => {
-		const state = getState() as RootState;
-		if (state.resources.isLoadingSelected) {
+	async (
+		index: number,
+		{ getState, dispatch }
+	): Promise<AggregatedState | null> => {
+		const state = (getState() as RootState).resources;
+		if (
+			state.isLoadingAggregatedState ||
+			state.changes.length === 0 ||
+			index === state.aggregatedState.index
+		) {
 			return null;
 		}
 
-		dispatch(resourcesSlice.actions.setLoadingSelected());
+		dispatch(resourcesSlice.actions.setLoadingAggregatedState());
 
-		const result: ResourceTimePoint = {
-			timestamp,
-			index: 0,
-			resources: {},
-		};
+		if (index < 0) {
+			return initialState.aggregatedState;
+		}
+		if (index > state.changes.length - 1) {
+			index = state.changes.length - 1;
+		}
 
-		let index = 0;
-		await everyLimit(
-			state.resources.resourceChanges,
-			config.maxChangesProcessedByTick,
-			(item: ResourceChangeItem, callback) => {
-				if (item.timestamp > timestamp) {
-					return callback(null, false);
-				}
+		const indexStep = index > state.aggregatedState.index ? 1 : -1;
 
-				if (!result.resources[item.resource]) {
-					result.resources[item.resource] = {};
-				}
+		let currentIndex = state.aggregatedState.index;
+		let result = cloneDeep(state.aggregatedState);
+		let skipIndexStep = indexStep < 0;
+		let processedCount = 0;
 
-				result.resources[item.resource][item.name] =
-					(result.resources[item.resource][item.name] ?? 0) +
-					item.value;
-
-				result.index = index;
-				result.timestamp = item.timestamp;
-
-				index++;
-
-				setTimeout(() => callback(null, true), 0);
+		// Calculate aggregated resource state from current position in timeline
+		while (currentIndex !== index) {
+			if (skipIndexStep) {
+				skipIndexStep = false;
+			} else {
+				currentIndex += indexStep;
 			}
-		);
 
-		dispatch(resourcesSlice.actions.completeLoadingSelected(result));
+			const change = state.changes[currentIndex];
+
+			if (indexStep < 0 && currentIndex === index) {
+				result.index = currentIndex;
+				result.timestamp = change.timestamp;
+				break;
+			}
+
+			if (!result.resources[change.resource]) {
+				result.resources[change.resource] = {};
+			}
+
+			result.resources[change.resource][change.name] =
+				(result.resources[change.resource][change.name] ?? 0) +
+				change.value * indexStep;
+
+			if (result.resources[change.resource][change.name] <= 0) {
+				delete result.resources[change.resource][change.name];
+			}
+
+			result.index = currentIndex;
+			result.timestamp = change.timestamp;
+
+			processedCount++;
+			if (processedCount > config.maxChangesProcessedPerTick) {
+				processedCount = 0;
+				// Wait for one tick to prevent app from freezing
+				await wait();
+			}
+		}
+
+		return result;
 	}
 );
-
-export const { setSelectedTime } = resourcesSlice.actions;
 
 export default resourcesSlice.reducer;

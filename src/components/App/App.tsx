@@ -1,12 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import {
-	fetchResources,
-	requestResourcesAtTimestamp,
-} from '../../store/resources';
+import { fetchResources, setTimelineIndex } from '../../store/resources';
 import { ResourcesLoadingStatus, RootState } from '../../store/types';
 import ResourcesTable from '../ResourcesTable';
-import TimeRange from '../TimeRange';
+import TimelineRange from '../TimelineRange';
 import styles from './App.module.css';
 
 export function App() {
@@ -14,24 +11,15 @@ export function App() {
 	const resourcesStatus = useAppSelector(
 		(state: RootState) => state.resources.status
 	);
-	const [resourcesChangesCount] = useAppSelector((state: RootState) => [
-		state.resources.resourceChanges.length,
-		state.resources.timeFrom,
-	]);
-
-	const [minTimestamp, maxTimestamp] = useAppSelector((state: RootState) => [
-		state.resources.timeFrom,
-		state.resources.timeTo,
-	]);
-
-	const resources = useAppSelector(
-		(state: RootState) => state.resources.selectedResources
+	const timelineItemsCount = useAppSelector(
+		(state: RootState) => state.resources.changes.length
 	);
 
-	const [timestamp, setTimestamp] = useState(minTimestamp);
-	// const isLoadingSelected = useAppSelector(
-	// 	(state: RootState) => state.resources.isLoadingSelected
-	// );
+	const resources = useAppSelector(
+		(state: RootState) => state.resources.aggregatedState
+	);
+
+	const [currentIndex, setCurrentIndex] = useState(0);
 
 	useEffect(() => {
 		if (resourcesStatus === ResourcesLoadingStatus.Idle) {
@@ -44,21 +32,17 @@ export function App() {
 			return;
 		}
 
-		dispatch(
-			requestResourcesAtTimestamp({ timestamp: timestamp })
-		);
-	}, [timestamp, resourcesStatus, dispatch]);
+		dispatch(setTimelineIndex(currentIndex));
+	}, [currentIndex, resourcesStatus, dispatch]);
 
 	return (
 		<div className={styles.app}>
 			<h1>Resource Browser {resourcesStatus}</h1>
-			<p>Data items count: {resourcesChangesCount}</p>
-			<p>Selected timestamp: {timestamp}</p>
-			<TimeRange
-				onChange={setTimestamp}
-				min={minTimestamp}
-				max={maxTimestamp}
-				disabled={resourcesStatus !== ResourcesLoadingStatus.Loaded}
+			<p>Data items count: {timelineItemsCount}</p>
+			<p>Selected index: {currentIndex}</p>
+			<TimelineRange
+				onChange={setCurrentIndex}
+				itemsCount={timelineItemsCount}
 			/>
 			<ResourcesTable resources={resources.resources} />
 		</div>

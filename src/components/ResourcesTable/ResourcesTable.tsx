@@ -1,20 +1,25 @@
-import { ResourceTimePoint } from '../../store/types';
+import { useMemo } from 'react';
+import { AggregatedState } from '../../store/types';
 
 interface ResourcesTableProps {
-	resources: ResourceTimePoint['resources'];
+	resources: AggregatedState['resources'];
 }
 
 export function ResourcesTable({ resources }: ResourcesTableProps) {
-	const rows = Object.entries(resources).flatMap(([resource, users]) =>
-		Object.entries(users)
-			.sort(([, a], [, b]) => b - a)
-			.map(([name, amount]) => (
-				<tr key={`${resource}_${name}`}>
-					<td>{name}</td>
-					<td>{resource}</td>
-					<td>{amount}</td>
-				</tr>
-			))
+	const rows = useMemo(
+		() =>
+			Object.entries(resources).flatMap(([resource, users]) =>
+				Object.entries(users)
+					.sort(([, a], [, b]) => b - a)
+					.map(([name, amount]) => (
+						<tr key={`${resource}_${name}`}>
+							<td>{name}</td>
+							<td>{resource}</td>
+							<td>{amount}</td>
+						</tr>
+					))
+			),
+		[resources]
 	);
 
 	return (
