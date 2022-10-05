@@ -2,12 +2,18 @@ export interface RootState {
 	resources: ResourcesState;
 }
 
+export interface AggregatedStateAmount {
+	value: number;
+	change: number;
+	changeTimestamp: number;
+}
+
 export interface AggregatedState {
 	index: number;
 	timestamp: number;
 	resources: {
 		[resource: string]: {
-			[name: string]: number;
+			[name: string]: AggregatedStateAmount;
 		};
 	};
 }

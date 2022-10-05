@@ -1,30 +1,69 @@
 import { useMemo } from 'react';
-import { AggregatedState } from '../../store/types';
+import { AggregatedState, AggregatedStateAmount } from '../../store/types';
 import styles from './styles.module.css';
 
 interface ResourcesTableProps {
-	resources: AggregatedState['resources'];
+	aggregatedState: Pick<AggregatedState, 'resources' | 'timestamp'>;
 }
 
-function formatAmount(amount: number) {
-	return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+function formatValue(value: number) {
+	return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 }
 
-export function ResourcesTable({ resources }: ResourcesTableProps) {
+function formatChange(value: number) {
+	return value > 0 ? `+${value}` : value;
+}
+
+function renderAmountChange(value: number) {
+	const className = value > 0 ? styles.changePositive : styles.changeNegative;
+
+	return (
+		<span className={styles.changeLabel + ' ' + className}>
+			({formatChange(value)})
+		</span>
+	);
+}
+
+function renderAmountRow(
+	amount: AggregatedStateAmount,
+	currentTimestamp: number
+) {
+	const isChangeVisible =
+		amount.change !== 0 && currentTimestamp === amount.changeTimestamp;
+
+	const amountChange = isChangeVisible ? (
+		<> {renderAmountChange(amount.change)}</>
+	) : (
+		<></>
+	);
+
+	return (
+		<td>
+			{formatValue(amount.value)}
+			{amountChange}
+		</td>
+	);
+}
+
+export function ResourcesTable({ aggregatedState }: ResourcesTableProps) {
 	const rows = useMemo(
 		() =>
-			Object.entries(resources).flatMap(([resource, users]) =>
-				Object.entries(users)
-					.sort(([, a], [, b]) => b - a)
-					.map(([name, amount]) => (
-						<tr key={`${resource}_${name}`}>
-							<td>{name}</td>
-							<td>{resource}</td>
-							<td>{formatAmount(amount)}</td>
-						</tr>
-					))
+			Object.entries(aggregatedState.resources).flatMap(
+				([resource, users]) =>
+					Object.entries(users)
+						.sort(([, { value: a }], [, { value: b }]) => b - a)
+						.map(([name, amount]) => (
+							<tr key={`${resource}_${name}`}>
+								<td>{name}</td>
+								<td>{resource}</td>
+								{renderAmountRow(
+									amount,
+									aggregatedState.timestamp
+								)}
+							</tr>
+						))
 			),
-		[resources]
+		[aggregatedState]
 	);
 
 	return (

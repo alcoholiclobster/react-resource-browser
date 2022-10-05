@@ -42,8 +42,8 @@ describe('resourcesSlice', () => {
 		await store.dispatch(setTimelinePosition(1));
 
 		let state = getState();
-		expect(state.aggregatedState.resources.wood.Bob).toBe(5);
-		expect(state.aggregatedState.resources.silver.Alex).toBe(999);
+		expect(state.aggregatedState.resources.wood.Bob.value).toBe(5);
+		expect(state.aggregatedState.resources.silver.Alex.value).toBe(999);
 		expect(state.aggregatedState.resources.wood.Alex).toBeUndefined();
 		expect(state.aggregatedState.index).toBe(1);
 		expect(state.aggregatedState.timestamp).toBe(16);
@@ -51,20 +51,20 @@ describe('resourcesSlice', () => {
 		await store.dispatch(setTimelinePosition(4));
 		state = getState();
 		expect(state.aggregatedState.index).toBe(4);
-		expect(state.aggregatedState.resources.wood.Alex).toBe(50);
-		expect(state.aggregatedState.resources.wood.Bob).toBe(3);
-		expect(state.aggregatedState.resources.silver.Alex).toBe(1000);
+		expect(state.aggregatedState.resources.wood.Alex.value).toBe(50);
+		expect(state.aggregatedState.resources.wood.Bob.value).toBe(3);
+		expect(state.aggregatedState.resources.silver.Alex.value).toBe(1000);
 
 		await store.dispatch(setTimelinePosition(4));
 		state = getState();
 		expect(state.aggregatedState.index).toBe(4);
-		expect(state.aggregatedState.resources.wood.Alex).toBe(50);
-		expect(state.aggregatedState.resources.wood.Bob).toBe(3);
-		expect(state.aggregatedState.resources.silver.Alex).toBe(1000);
+		expect(state.aggregatedState.resources.wood.Alex.value).toBe(50);
+		expect(state.aggregatedState.resources.wood.Bob.value).toBe(3);
+		expect(state.aggregatedState.resources.silver.Alex.value).toBe(1000);
 
 		await store.dispatch(setTimelinePosition(0));
 		state = getState();
-		expect(state.aggregatedState.resources.wood.Bob).toBe(5);
+		expect(state.aggregatedState.resources.wood.Bob.value).toBe(5);
 		expect(state.aggregatedState.resources.silver.Alex).toBeUndefined();
 		expect(state.aggregatedState.resources.wood.Alex).toBeUndefined();
 		expect(state.aggregatedState.index).toBe(0);
@@ -79,8 +79,8 @@ describe('resourcesSlice', () => {
 
 		await store.dispatch(setTimelinePosition(2));
 		state = getState();
-		expect(state.aggregatedState.resources.wood.Bob).toBe(5);
-		expect(state.aggregatedState.resources.silver.Alex).toBe(1000);
+		expect(state.aggregatedState.resources.wood.Bob.value).toBe(5);
+		expect(state.aggregatedState.resources.silver.Alex.value).toBe(1000);
 		expect(state.aggregatedState.resources.wood.Alex).toBeUndefined();
 		expect(state.aggregatedState.timestamp).toBe(17);
 	});

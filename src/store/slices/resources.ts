@@ -138,11 +138,22 @@ export const setTimelinePosition = createAsyncThunk(
 				result.resources[change.resource] = {};
 			}
 
-			result.resources[change.resource][change.name] =
-				(result.resources[change.resource][change.name] ?? 0) +
-				change.value * indexStep;
+			if (!result.resources[change.resource][change.name]) {
+				result.resources[change.resource][change.name] = {
+					change: 0,
+					changeTimestamp: 0,
+					value: 0,
+				};
+			}
 
-			if (result.resources[change.resource][change.name] <= 0) {
+			result.resources[change.resource][change.name].value +=
+				change.value * indexStep;
+			result.resources[change.resource][change.name].change =
+				change.value;
+			result.resources[change.resource][change.name].changeTimestamp =
+				change.timestamp;
+
+			if (result.resources[change.resource][change.name].value <= 0) {
 				delete result.resources[change.resource][change.name];
 			}
 

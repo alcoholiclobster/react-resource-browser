@@ -48,17 +48,13 @@ function renderDate(timestamp: number) {
 
 export function ResourceBrowser() {
 	const dispatch = useAppDispatch();
-	const [
-		loadingStatus,
-		timelineItemsCount,
-		aggregatedResources,
-		currentTimestamp,
-	] = useAppSelector((state: RootState) => [
-		state.resources.status,
-		state.resources.changes.length,
-		state.resources.aggregatedState.resources,
-		state.resources.aggregatedState.timestamp,
-	]);
+	const [loadingStatus, timelineItemsCount, aggregatedState] = useAppSelector(
+		(state: RootState) => [
+			state.resources.status,
+			state.resources.changes.length,
+			state.resources.aggregatedState,
+		]
+	);
 	const [currentPosition, setCurrentPosition] = useState(-1);
 	const changePosition = (amount: number) => {
 		setCurrentPosition(
@@ -85,7 +81,7 @@ export function ResourceBrowser() {
 	return (
 		<div>
 			<div className={styles.controls}>
-				{renderDate(currentTimestamp)}
+				{renderDate(aggregatedState.timestamp)}
 				<TimelineRange
 					value={currentPosition}
 					onChange={setCurrentPosition}
@@ -104,7 +100,7 @@ export function ResourceBrowser() {
 					</button>
 				</div>
 			</div>
-			<ResourcesTable resources={aggregatedResources} />
+			<ResourcesTable aggregatedState={aggregatedState} />
 		</div>
 	);
 }

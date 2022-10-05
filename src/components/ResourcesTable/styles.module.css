@@ -2,11 +2,24 @@
     text-align: center;
 }
 
+.changeLabel {
+    font-weight: 700;
+}
+
+.changePositive {
+    color: rgb(27, 130, 75);
+}
+
+.changeNegative {
+    color: rgb(229, 26, 26);
+}
+
 .resourcesTable {
     margin-top: 15px;
     width: 100%;
     padding: 0;
     border-spacing: 0;
+    table-layout: fixed;
 }
 
 .resourcesTable thead {
