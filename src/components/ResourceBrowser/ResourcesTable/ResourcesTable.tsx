@@ -1,6 +1,6 @@
-import { useMemo } from 'react';
-import { AggregatedState, AggregatedStateAmount } from '../../store/types';
+import { AggregatedState, AggregatedStateAmount } from '../../../store';
 import styles from './styles.module.css';
+import { useMemo } from 'react';
 
 interface ResourcesTableProps {
 	aggregatedState: Pick<AggregatedState, 'resources' | 'timestamp'>;

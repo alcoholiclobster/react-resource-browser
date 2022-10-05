@@ -1,13 +1,16 @@
-import { useState, useEffect } from 'react';
-import { RootState } from '../../store';
-import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import {
+	ResourcesLoadingStatus,
+	RootState,
+	useAppDispatch,
+	useAppSelector,
+} from '../../store';
 import {
 	fetchResources,
 	setTimelinePosition,
 } from '../../store/slices/resources';
-import { ResourcesLoadingStatus } from '../../store/types';
-import ResourcesTable from '../ResourcesTable';
-import TimelineRange from '../TimelineRange';
+import { useEffect, useState } from 'react';
+import ResourcesTable from './ResourcesTable';
+import TimelineRange from './TimelineRange';
 import styles from './styles.module.css';
 
 const months = [
@@ -78,7 +81,9 @@ export function ResourceBrowser() {
 		dispatch(setTimelinePosition(currentPosition));
 	}, [currentPosition, loadingStatus, dispatch]);
 
-	return (
+	return loadingStatus !== ResourcesLoadingStatus.Loaded ? (
+		<p className={styles.loadingLabel}>Data is loading...</p>
+	) : (
 		<div>
 			<div className={styles.controls}>
 				{renderDate(aggregatedState.timestamp)}

@@ -1,7 +1,7 @@
-import { useCallback, useState } from 'react';
-import { Range } from 'react-range';
 import { IRenderThumbParams, IRenderTrackParams } from 'react-range/lib/types';
+import { Range } from 'react-range';
 import styles from './styles.module.css';
+import { useCallback } from 'react';
 
 interface TimeRangeProps {
 	onChange: (itemIndex: number) => void;
