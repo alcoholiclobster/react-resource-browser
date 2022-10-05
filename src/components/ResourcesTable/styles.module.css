@@ -1,0 +1,36 @@
+.label {
+    text-align: center;
+}
+
+.resourcesTable {
+    margin-top: 15px;
+    width: 100%;
+    padding: 0;
+    border-spacing: 0;
+}
+
+.resourcesTable thead {
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.5;
+    color: #212529;
+    text-align: left;
+}
+
+.resourcesTable td {
+    padding: 0 15px;
+}
+
+.resourcesTable th {
+    padding: 0 15px;
+}
+
+.resourcesTable tr {
+    height: 40px;
+    border-collapse: separate;
+    border: 1px solid black;
+}
+
+.resourcesTable tr:nth-child(even) {
+    background-color: #f2f2f2;
+}

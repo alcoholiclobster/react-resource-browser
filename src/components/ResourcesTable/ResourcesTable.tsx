@@ -1,8 +1,13 @@
 import { useMemo } from 'react';
 import { AggregatedState } from '../../store/types';
+import styles from './styles.module.css';
 
 interface ResourcesTableProps {
 	resources: AggregatedState['resources'];
+}
+
+function formatAmount(amount: number) {
+	return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 }
 
 export function ResourcesTable({ resources }: ResourcesTableProps) {
@@ -15,7 +20,7 @@ export function ResourcesTable({ resources }: ResourcesTableProps) {
 						<tr key={`${resource}_${name}`}>
 							<td>{name}</td>
 							<td>{resource}</td>
-							<td>{amount}</td>
+							<td>{formatAmount(amount)}</td>
 						</tr>
 					))
 			),
@@ -23,15 +28,22 @@ export function ResourcesTable({ resources }: ResourcesTableProps) {
 	);
 
 	return (
-		<table>
-			<thead>
-				<tr>
-					<th>Name</th>
-					<th>Resource</th>
-					<th>Amount</th>
-				</tr>
-			</thead>
-			<tbody>{rows}</tbody>
-		</table>
+		<>
+			<table className={styles.resourcesTable}>
+				<thead>
+					<tr>
+						<th>PLAYER</th>
+						<th>RESOURCE</th>
+						<th>AMOUNT</th>
+					</tr>
+				</thead>
+				<tbody>{rows}</tbody>
+			</table>
+			{rows.length === 0 ? (
+				<p className={styles.label}>Select time point</p>
+			) : (
+				<></>
+			)}
+		</>
 	);
 }

@@ -1,0 +1,8 @@
+.timelineTrack:focus {
+    outline: none;
+    background-color: var(--accent-color-hover);
+}
+
+.timelineTrack:hover {
+    background-color: var(--accent-color-hover) !important;
+}

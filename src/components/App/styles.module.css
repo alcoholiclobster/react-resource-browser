@@ -1,0 +1,44 @@
+.container {
+	width: 64rem;
+	margin: 0 auto;
+	padding: 0 1rem;
+}
+
+.card {
+	background-color: #fff;
+	border-radius: 0.5rem;
+	box-shadow: 0 0 1.5rem rgb(0, 0, 0, 0.1);
+	margin: 2rem 0 2rem 0;
+	padding: 1rem 1rem 1rem 1rem;
+	position: relative;
+}
+
+.card h1 {
+	color: #000000;
+	font-weight: 700;
+	text-align: center;
+}
+
+.card h2 {
+	font-size: 2rem;
+	font-weight: 700;
+	margin-bottom: 0;
+	margin-top: 0;
+}
+
+.card p {
+	opacity: 0.8;
+	color: #333;
+	margin-top: 1em;
+	margin-bottom: 1em;
+	line-height: 1.5em;
+}
+
+.card a {
+	opacity: 0.8;
+	color: var(--accent-color);
+	margin-top: 1em;
+	margin-bottom: 1em;
+	line-height: 1.5em;
+	text-decoration: underline;
+}

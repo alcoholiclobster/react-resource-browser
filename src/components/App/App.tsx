@@ -1,11 +1,25 @@
+import config from '../../config';
 import ResourceBrowser from '../ResourceBrowser';
-import styles from './App.module.css';
+import styles from './styles.module.css';
 
 export function App() {
 	return (
-		<div className={styles.app}>
-			<h1>Resource Browser</h1>
-			<ResourceBrowser />
+		<div className={styles.container}>
+			<div className={styles.card}>
+				<h2>Resource Browser Demo</h2>
+				<p>
+					This a demo application that shows the Resource Browser
+					component in action. Use slider below to select a time point
+					at which current resources count should be calculated and
+					displayed.
+				</p>
+				<a href={config.projectRepoUrl} target="_blank">
+					Source code on GitHub →
+				</a>
+			</div>
+			<div className={styles.card}>
+				<ResourceBrowser />
+			</div>
 		</div>
 	);
 }

@@ -8,6 +8,43 @@ import {
 import { ResourcesLoadingStatus } from '../../store/types';
 import ResourcesTable from '../ResourcesTable';
 import TimelineRange from '../TimelineRange';
+import styles from './styles.module.css';
+
+const months = [
+	'Jan',
+	'Feb',
+	'Mar',
+	'Apr',
+	'May',
+	'Jun',
+	'Jul',
+	'Aug',
+	'Sep',
+	'Oct',
+	'Nov',
+	'Dec',
+];
+
+function renderDate(timestamp: number) {
+	if (timestamp < 0) {
+		return (
+			<p className={styles.controlsTime}>
+				<b>Time is not selected</b>
+			</p>
+		);
+	}
+	const date = new Date(timestamp * 1000);
+	return (
+		<p className={styles.controlsTime}>
+			{date.getDay()} {months[date.getMonth()]} {date.getFullYear()}{' '}
+			<b>
+				{date.getHours().toString().padStart(2, '0')}:
+				{date.getMinutes().toString().padStart(2, '0')}:
+				{date.getSeconds().toString().padStart(2, '0')}
+			</b>
+		</p>
+	);
+}
 
 export function ResourceBrowser() {
 	const dispatch = useAppDispatch();
@@ -23,6 +60,14 @@ export function ResourceBrowser() {
 		state.resources.aggregatedState.timestamp,
 	]);
 	const [currentPosition, setCurrentPosition] = useState(-1);
+	const changePosition = (amount: number) => {
+		setCurrentPosition(
+			Math.max(
+				-1,
+				Math.min(timelineItemsCount - 1, currentPosition + amount)
+			)
+		);
+	};
 
 	useEffect(() => {
 		if (loadingStatus === ResourcesLoadingStatus.Idle) {
@@ -37,26 +82,29 @@ export function ResourceBrowser() {
 		dispatch(setTimelinePosition(currentPosition));
 	}, [currentPosition, loadingStatus, dispatch]);
 
-	const currentDateString =
-		currentPosition >= 0
-			? `Time: ${new Date(currentTimestamp * 1000).toISOString()}`
-			: 'Select time';
-
 	return (
-		<>
-			<p>
-				Data items count:{' '}
-				{loadingStatus === ResourcesLoadingStatus.Loading
-					? 'loading...'
-					: timelineItemsCount}
-			</p>
-			<p>{currentDateString}</p>
-
-			<TimelineRange
-				onChange={setCurrentPosition}
-				itemsCount={timelineItemsCount}
-			/>
+		<div>
+			<div className={styles.controls}>
+				{renderDate(currentTimestamp)}
+				<TimelineRange
+					value={currentPosition}
+					onChange={setCurrentPosition}
+					itemsCount={timelineItemsCount - 1}
+				/>
+				<div className={styles.controlsButtons}>
+					<button
+						className={styles.controlsButton}
+						onClick={() => changePosition(-1)}>
+						◄ Prev
+					</button>
+					<button
+						className={styles.controlsButton}
+						onClick={() => changePosition(1)}>
+						Next ►
+					</button>
+				</div>
+			</div>
 			<ResourcesTable resources={aggregatedResources} />
-		</>
+		</div>
 	);
 }

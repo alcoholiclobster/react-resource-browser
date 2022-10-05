@@ -1,54 +1,69 @@
 import { useCallback, useState } from 'react';
 import { Range } from 'react-range';
+import { IRenderThumbParams, IRenderTrackParams } from 'react-range/lib/types';
+import styles from './styles.module.css';
 
 interface TimeRangeProps {
 	onChange: (itemIndex: number) => void;
+	value: number;
 
 	itemsCount: number;
 }
 
-export function TimelineRange({ onChange, itemsCount }: TimeRangeProps) {
-	const [value, setValue] = useState(-1);
-
+export function TimelineRange({ onChange, value, itemsCount }: TimeRangeProps) {
 	const handleChange = useCallback(
 		(values: number[]) => {
-			setValue(values[0]);
 			onChange(values[0]);
 		},
 		[itemsCount]
+	);
+
+	const renderTrack = useCallback(
+		({ props, children }: IRenderTrackParams) => (
+			<div
+				{...props}
+				style={{
+					...props.style,
+					height: '8px',
+					width: '100%',
+					backgroundColor: '#bbb',
+					alignSelf: 'center',
+				}}>
+				{children}
+			</div>
+		),
+		[]
+	);
+
+	const renderThumb = useCallback(
+		({ props }: IRenderThumbParams) => (
+			<div
+				{...props}
+				style={{
+					...props.style,
+					height: '32px',
+					width: '32px',
+					borderRadius: '15px',
+					border: '5px solid #fff',
+					boxSizing: 'border-box',
+					backgroundColor: 'var(--accent-color)',
+				}}
+				className={styles.timelineTrack}
+			/>
+		),
+		[]
 	);
 
 	return (
 		<Range
 			step={1}
 			min={-1}
-			max={itemsCount}
+			max={Math.max(0, itemsCount)}
 			disabled={itemsCount === 0}
 			values={[value]}
 			onChange={handleChange}
-			renderTrack={({ props, children }) => (
-				<div
-					{...props}
-					style={{
-						...props.style,
-						height: '6px',
-						width: '100%',
-						backgroundColor: '#ccc',
-					}}>
-					{children}
-				</div>
-			)}
-			renderThumb={({ props }) => (
-				<div
-					{...props}
-					style={{
-						...props.style,
-						height: '42px',
-						width: '42px',
-						backgroundColor: '#999',
-					}}
-				/>
-			)}
+			renderTrack={renderTrack}
+			renderThumb={renderThumb}
 		/>
 	);
 }
