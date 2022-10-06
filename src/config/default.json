@@ -3,7 +3,7 @@
 	"maxChangesProcessedPerTick": 5000,
 
 	"endpoints": {
-		"getResources": "https://raw.githubusercontent.com/alexgavrushenko/lootbox/master/generated.log"
+		"getResourcesChanges": "https://raw.githubusercontent.com/alexgavrushenko/lootbox/master/generated.log"
 	},
 
 	"projectRepoUrl": "https://github.com/alcoholiclobster/react-resource-browser"

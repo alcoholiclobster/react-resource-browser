@@ -10,7 +10,11 @@ interface TimeRangeProps {
 	itemsCount: number;
 }
 
-export function TimelineRange({ onChange, value, itemsCount }: TimeRangeProps) {
+export const TimelineRange = ({
+	onChange,
+	value,
+	itemsCount,
+}: TimeRangeProps) => {
 	const handleChange = useCallback(
 		(values: number[]) => {
 			onChange(values[0]);
@@ -66,4 +70,4 @@ export function TimelineRange({ onChange, value, itemsCount }: TimeRangeProps) {
 			renderThumb={renderThumb}
 		/>
 	);
-}
+};

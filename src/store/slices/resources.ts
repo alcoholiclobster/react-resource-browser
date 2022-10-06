@@ -6,10 +6,11 @@ import {
 	RootState,
 } from '../types';
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-import axios from 'axios';
 import { cloneDeep } from 'lodash';
 import config from '../../config';
 import { eachLimit } from 'async';
+import { wait } from '../../utils';
+import { getResourcesChanges } from '../../api';
 
 const initialState: ResourcesState = {
 	status: ResourcesLoadingStatus.Idle,
@@ -21,10 +22,6 @@ const initialState: ResourcesState = {
 	},
 	changes: [],
 };
-
-async function wait(ms: number = 0) {
-	return new Promise((resolve) => setTimeout(resolve, ms));
-}
 
 const resourcesSlice = createSlice({
 	name: 'resources',
@@ -54,10 +51,10 @@ const resourcesSlice = createSlice({
 
 			.addCase(setTimelinePosition.fulfilled, (state, action) => {
 				state.isLoadingAggregatedState = false;
-				if (!action.payload) {
-					return;
+
+				if (action.payload) {
+					state.aggregatedState = action.payload;
 				}
-				state.aggregatedState = action.payload;
 			});
 	},
 });
@@ -65,12 +62,12 @@ const resourcesSlice = createSlice({
 export const fetchResources = createAsyncThunk(
 	'resources/fetchResources',
 	async () => {
-		const response = await axios.get<string>(config.endpoints.getResources);
+		const resourcesData = await getResourcesChanges();
 		const changes: ResourceChange[] = [];
 
 		// Limit items processed by tick to prevent app from freezing
 		await eachLimit(
-			response.data.split('\n'),
+			resourcesData.split('\n'),
 			config.maxChangesParsedPerTick,
 			(line: string, callback) => {
 				try {

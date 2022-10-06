@@ -9,7 +9,7 @@
 }
 
 .controlsTime {
-    min-width: 170px;
+    min-width: 175px;
     margin-right: 20px;
     text-align: center;
     align-self: center;
@@ -40,8 +40,13 @@
 }
 
 .controlsButton:hover {
-    color: "#000" !important;
     background-color: var(--accent-color-hover);
+}
+
+.controlsButton:disabled {
+    color: #ddd !important;
+    background-color: #bbb;
+    cursor: default;
 }
 
 .controlsButton:not(:first-child) {

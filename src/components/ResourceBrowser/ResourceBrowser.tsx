@@ -12,23 +12,19 @@ import { useEffect, useState } from 'react';
 import ResourcesTable from './ResourcesTable';
 import TimelineRange from './TimelineRange';
 import styles from './styles.module.css';
+import { clamp } from 'lodash';
+import { getMonthName } from '../../utils';
+import { Button } from './Button';
 
-const months = [
-	'Jan',
-	'Feb',
-	'Mar',
-	'Apr',
-	'May',
-	'Jun',
-	'Jul',
-	'Aug',
-	'Sep',
-	'Oct',
-	'Nov',
-	'Dec',
-];
+interface TimelineDateProps {
+	timestamp: number;
+}
 
-function renderDate(timestamp: number) {
+interface LoadingStatusLabelProps {
+	status: ResourcesLoadingStatus;
+}
+
+const TimelineDate = ({ timestamp }: TimelineDateProps) => {
 	if (timestamp < 0) {
 		return (
 			<p className={styles.controlsTime}>
@@ -39,7 +35,8 @@ function renderDate(timestamp: number) {
 	const date = new Date(timestamp * 1000);
 	return (
 		<p className={styles.controlsTime}>
-			{date.getDay()} {months[date.getMonth()]} {date.getFullYear()}{' '}
+			{date.getDate()} {getMonthName(date.getMonth())}{' '}
+			{date.getFullYear()}{' '}
 			<b>
 				{date.getHours().toString().padStart(2, '0')}:
 				{date.getMinutes().toString().padStart(2, '0')}:
@@ -47,10 +44,20 @@ function renderDate(timestamp: number) {
 			</b>
 		</p>
 	);
-}
+};
 
-export function ResourceBrowser() {
+const LoadingStatusLabel = ({ status }: LoadingStatusLabelProps) => {
+	let text = 'Data is loading...';
+	if (status === ResourcesLoadingStatus.Error) {
+		text = 'Failed to load data.';
+	}
+
+	return <p className={styles.loadingLabel}>{text}</p>;
+};
+
+export const ResourceBrowser = () => {
 	const dispatch = useAppDispatch();
+
 	const [loadingStatus, timelineItemsCount, aggregatedState] = useAppSelector(
 		(state: RootState) => [
 			state.resources.status,
@@ -58,13 +65,11 @@ export function ResourceBrowser() {
 			state.resources.aggregatedState,
 		]
 	);
+
 	const [currentPosition, setCurrentPosition] = useState(-1);
-	const changePosition = (amount: number) => {
+	const addCurrentPosition = (amount: number) => {
 		setCurrentPosition(
-			Math.max(
-				-1,
-				Math.min(timelineItemsCount - 1, currentPosition + amount)
-			)
+			clamp(currentPosition + amount, -1, timelineItemsCount - 1)
 		);
 	};
 
@@ -73,6 +78,7 @@ export function ResourceBrowser() {
 			dispatch(fetchResources());
 		}
 	}, [loadingStatus, dispatch]);
+
 	useEffect(() => {
 		if (loadingStatus !== ResourcesLoadingStatus.Loaded) {
 			return;
@@ -82,30 +88,30 @@ export function ResourceBrowser() {
 	}, [currentPosition, loadingStatus, dispatch]);
 
 	return loadingStatus !== ResourcesLoadingStatus.Loaded ? (
-		<p className={styles.loadingLabel}>Data is loading...</p>
+		<LoadingStatusLabel status={loadingStatus} />
 	) : (
 		<div>
 			<div className={styles.controls}>
-				{renderDate(aggregatedState.timestamp)}
+				<TimelineDate timestamp={aggregatedState.timestamp} />
 				<TimelineRange
 					value={currentPosition}
 					onChange={setCurrentPosition}
 					itemsCount={timelineItemsCount - 1}
 				/>
 				<div className={styles.controlsButtons}>
-					<button
-						className={styles.controlsButton}
-						onClick={() => changePosition(-1)}>
+					<Button
+						onClick={() => addCurrentPosition(-1)}
+						disabled={currentPosition === -1}>
 						◄ Prev
-					</button>
-					<button
-						className={styles.controlsButton}
-						onClick={() => changePosition(1)}>
+					</Button>
+					<Button
+						onClick={() => addCurrentPosition(1)}
+						disabled={currentPosition === timelineItemsCount - 1}>
 						Next ►
-					</button>
+					</Button>
 				</div>
 			</div>
 			<ResourcesTable aggregatedState={aggregatedState} />
 		</div>
 	);
-}
+};
