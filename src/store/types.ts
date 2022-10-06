@@ -5,7 +5,6 @@ export interface RootState {
 export interface AggregatedStateAmount {
 	value: number;
 	change: number;
-	changeTimestamp: number;
 }
 
 export interface AggregatedState {
@@ -16,6 +15,7 @@ export interface AggregatedState {
 			[name: string]: AggregatedStateAmount;
 		};
 	};
+	totalResources: { resource: string; totalAmount: number }[];
 }
 
 export interface ResourceChange {

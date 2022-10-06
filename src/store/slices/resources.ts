@@ -6,7 +6,7 @@ import {
 	RootState,
 } from '../types';
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-import { cloneDeep } from 'lodash';
+import _ from 'lodash';
 import config from '../../config';
 import { eachLimit } from 'async';
 import { wait } from '../../utils';
@@ -19,6 +19,7 @@ const initialState: ResourcesState = {
 		index: -1,
 		timestamp: -1,
 		resources: {},
+		totalResources: [],
 	},
 	changes: [],
 };
@@ -111,7 +112,7 @@ export const setTimelinePosition = createAsyncThunk(
 		const indexStep = index > state.aggregatedState.index ? 1 : -1;
 
 		let currentIndex = state.aggregatedState.index;
-		let result = cloneDeep(state.aggregatedState);
+		let result = _.cloneDeep(state.aggregatedState);
 		let skipIndexStep = indexStep < 0;
 		let processedCount = 0;
 
@@ -138,17 +139,12 @@ export const setTimelinePosition = createAsyncThunk(
 			if (!result.resources[change.resource][change.name]) {
 				result.resources[change.resource][change.name] = {
 					change: 0,
-					changeTimestamp: 0,
 					value: 0,
 				};
 			}
 
 			result.resources[change.resource][change.name].value +=
 				change.value * indexStep;
-			result.resources[change.resource][change.name].change =
-				change.value;
-			result.resources[change.resource][change.name].changeTimestamp =
-				change.timestamp;
 
 			if (result.resources[change.resource][change.name].value <= 0) {
 				delete result.resources[change.resource][change.name];
@@ -163,6 +159,33 @@ export const setTimelinePosition = createAsyncThunk(
 				// Wait for one tick to prevent app from freezing
 				await wait();
 			}
+		}
+
+		result.totalResources = [];
+
+		for (const [name, users] of Object.entries(result.resources)) {
+			const amount = Object.entries(users)
+				.map(([, amount]) => {
+					amount.change = 0;
+					return amount.value;
+				})
+				.reduce((sum, value) => sum + value, 0);
+
+			result.totalResources.push({ resource: name, totalAmount: amount });
+		}
+
+		result.totalResources.sort(
+			({ totalAmount: a }, { totalAmount: b }) => a - b
+		);
+
+		const lastChange = state.changes[index];
+		if (
+			lastChange &&
+			result.resources[lastChange.resource] &&
+			result.resources[lastChange.resource][lastChange.name]
+		) {
+			result.resources[lastChange.resource][lastChange.name].change =
+				lastChange.value;
 		}
 
 		return result;
